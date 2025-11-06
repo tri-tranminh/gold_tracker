@@ -31,5 +31,5 @@ jobs:
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
           git add gold_history.csv
-          git commit -m "Update gold data [skip ci]" || echo "No changes to commit"
-          git push
+          git commit -m "Update gold data [skip ci]" || exit 0
+          git push https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/tri-tranminh/gold_tracker.git HEAD:main
