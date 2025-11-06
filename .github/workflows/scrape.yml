@@ -1,0 +1,35 @@
+name: Daily Gold Price Scraper
+
+on:
+  schedule:
+    - cron: "0 0 * * *"   # runs every day at 00:00 UTC (07:00 Vietnam)
+  workflow_dispatch:      # allows manual run button in GitHub UI
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Run scraper
+        run: |
+          python gold_scraper.py
+
+      - name: Commit updated CSV
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add gold_history.csv
+          git commit -m "Update gold data [skip ci]" || echo "No changes to commit"
+          git push
