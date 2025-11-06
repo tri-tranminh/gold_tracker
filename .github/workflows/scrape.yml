@@ -2,8 +2,11 @@ name: Daily Gold Price Scraper
 
 on:
   schedule:
-    - cron: "0 0 * * *"   # runs every day at 00:00 UTC (07:00 Vietnam)
-  workflow_dispatch:      # allows manual run button in GitHub UI
+    - cron: "0 0 * * *"     # every day at 00:00 UTC (07:00 Vietnam)
+  workflow_dispatch:        # allow manual trigger
+
+permissions:
+  contents: write           # ✅ REQUIRED for private repo push
 
 jobs:
   scrape:
@@ -12,6 +15,8 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false   # ✅ required when using custom token
 
       - name: Set up Python
         uses: actions/setup-python@v4
