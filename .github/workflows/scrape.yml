@@ -1,42 +1,42 @@
-name: Daily Gold Price Scraper
+name: Scrape gold prices (every 3 hours)
 
 on:
   schedule:
-    - cron: "0 0 * * *"     # every day at 00:00 UTC (07:00 Vietnam)
-  workflow_dispatch:        # allow manual trigger
+    - cron: "0 */3 * * *" # every 3 hours, UTC (VN time = UTC+7)
+  workflow_dispatch: {}    # allow manual run from Actions tab
 
 permissions:
-  contents: write           # ✅ REQUIRED for private repo push
+  contents: write
 
 jobs:
   scrape:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Check out repository
+      - name: Checkout repo
         uses: actions/checkout@v4
-        with:
-          persist-credentials: false   # ✅ required when using custom token
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
+          python-version: "3.11"
 
-      - name: Install dependencies
+      - name: Install deps
         run: |
-          pip install -r requirements.txt
+          python -m pip install --upgrade pip
+          pip install requests beautifulsoup4 pandas pytz
 
       - name: Run scraper
         run: |
           python gold_scraper.py
 
-      - name: Commit updated CSV
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+      - name: Commit & push if changed
         run: |
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
-          git add gold_history.csv
-          git commit -m "Update gold data [skip ci]" || echo "No changes to commit"
-          git push https://x-access-token:${GH_TOKEN}@github.com/tri-tranminh/gold_tracker.git HEAD:main
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [ -n "$(git status --porcelain)" ]; then
+            git add gold_history.csv
+            git commit -m "chore: update gold prices ($(date -u +'%Y-%m-%dT%H:%MZ'))"
+            git push
+          else
+            echo "No changes to commit."
+          fi
