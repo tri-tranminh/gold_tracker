@@ -1,117 +1,146 @@
-import csv
-import os
-import re
-from datetime import datetime, timedelta, timezone
-
 import requests
 from bs4 import BeautifulSoup
+from datetime import datetime
 import pandas as pd
+import os
+import sys
 
 URL = "https://ngoctham.com/bang-gia-vang/"
 CSV_FILE = "gold_history.csv"
+TIMEZONE = "Asia/Ho_Chi_Minh"
 
-# Vietnam timezone
-VN_TZ = timezone(timedelta(hours=7))
+# -------------------------
+# Helpers
+# -------------------------
 
-def parse_vnd(text: str) -> int:
-    if not text:
-        return 0
-    digits = re.sub(r"[^\d]", "", text)
-    return int(digits) if digits else 0
+def clean_price(text: str) -> int:
+    """
+    Convert '17.420.000' → 17420000
+    """
+    return int(text.replace(".", "").replace(",", "").strip())
 
-def ensure_csv_header():
-    if not os.path.exists(CSV_FILE):
-        with open(CSV_FILE, "w", newline="", encoding="utf-8-sig") as f:
-            w = csv.writer(f)
-            w.writerow(["timestamp", "date", "type", "buy", "sell"])
 
-def load_df():
-    if not os.path.exists(CSV_FILE):
-        return pd.DataFrame(columns=["timestamp", "date", "type", "buy", "sell"])
-    df = pd.read_csv(CSV_FILE, encoding="utf-8-sig")
-    # Normalize types
-    for col in ["timestamp", "date", "type", "buy", "sell"]:
-        if col not in df.columns:
-            df[col] = None
-    # Parse timestamp, keep original string date as-is
-    df["timestamp"] = pd.to_datetime(df["timestamp"], errors="coerce")
-    df["buy"]  = pd.to_numeric(df["buy"], errors="coerce").fillna(0).astype(int)
-    df["sell"] = pd.to_numeric(df["sell"], errors="coerce").fillna(0).astype(int)
-    return df
+def normalize_gold_name(name: str) -> str:
+    """
+    Normalize gold names so UI & charts stay consistent
+    """
+    name = name.strip()
 
-def crawl():
-    headers = { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" }
-    resp = requests.get(URL, headers=headers, timeout=30)
-    resp.raise_for_status()
-    soup = BeautifulSoup(resp.text, "html.parser")
+    if "SJC" in name:
+        return "Vàng miếng SJC"
+    if "Nhẫn" in name:
+        return "Vàng Nhẫn 999.9"
+    if "Ta 999.9" in name:
+        return "Vàng Ta (999.9)"
+    if "Ta 990" in name:
+        return "Vàng Ta (990)"
+    if "18K" in name or "750" in name:
+        return "Vàng 18K (750)"
+    if "Trắng" in name or "AU750" in name.upper():
+        return "Vàng trắng Au750"
 
-    # Find a table with headers containing LOẠI/MUA/BÁN
-    target_table = None
-    for table in soup.find_all("table"):
-        head = table.find("thead") or table
-        th_text = " ".join(th.get_text(strip=True).upper() for th in head.find_all("th"))
-        if all(k in th_text for k in ["LOẠI", "MUA", "BÁN"]):
-            target_table = table
-            break
-    if target_table is None:
-        tables = soup.find_all("table")
-        if tables:
-            target_table = tables[0]
-        else:
-            raise RuntimeError("No price table found.")
+    return name
 
-    rows = []
-    for tr in target_table.find_all("tr")[1:]:
-        tds = [td.get_text(strip=True) for td in tr.find_all("td")]
-        if len(tds) < 3:
-            continue
-        gold_type = tds[0]
-        buy = parse_vnd(tds[1])
-        sell = parse_vnd(tds[2])
-        if gold_type and (buy or sell):
-            rows.append((gold_type, buy, sell))
-    if not rows:
-        raise RuntimeError("Parsed 0 price rows.")
-    return rows
+
+def parse_update_time(soup: BeautifulSoup) -> datetime:
+    """
+    Parse: 'Cập nhật ngày 05/02/2026 7:16 PM'
+    """
+    time_el = soup.select_one(".time")
+    if not time_el:
+        return datetime.now()
+
+    raw = time_el.get_text(" ", strip=True)
+    raw = raw.replace("Cập nhật ngày", "").strip()
+
+    try:
+        return datetime.strptime(raw, "%d/%m/%Y %I:%M %p")
+    except Exception:
+        return datetime.now()
+
+
+# -------------------------
+# Main scraper
+# -------------------------
 
 def main():
-    ensure_csv_header()
-    df = load_df()
+    try:
+        resp = requests.get(
+            URL,
+            timeout=30,
+            headers={
+                "User-Agent": "Mozilla/5.0 (GoldTracker Bot)"
+            }
+        )
+        resp.raise_for_status()
+    except Exception as e:
+        print("❌ Request failed:", e)
+        sys.exit(0)  # IMPORTANT: do not fail GitHub Action
 
-    now_vn = datetime.now(VN_TZ)
-    timestamp = now_vn.strftime("%Y-%m-%d %H:%M:%S")
-    today_str = now_vn.strftime("%Y-%m-%d")
+    soup = BeautifulSoup(resp.text, "html.parser")
 
-    fresh = crawl()
+    table = soup.select_one("table.table")
+    if not table:
+        print("❌ Gold table not found")
+        sys.exit(0)
 
-    # Build today's latest by type from existing CSV
-    today_df = df[df["timestamp"].dt.strftime("%Y-%m-%d") == today_str] if not df.empty else pd.DataFrame()
-    latest_today_by_type = {}
-    if not today_df.empty:
-        today_sorted = today_df.sort_values("timestamp")
-        # keep last (latest) per type
-        latest_today_by_type = today_sorted.groupby("type").tail(1).set_index("type")[["buy", "sell"]].to_dict("index")
+    rows = table.select("tbody tr")
+    if not rows:
+        print("⚠️ No gold rows found")
+        sys.exit(0)
 
-    to_append = []
-    for gold_type, buy, sell in fresh:
-        prev = latest_today_by_type.get(gold_type)
-        if prev is None:
-            # no entry today -> append
-            to_append.append([timestamp, today_str, gold_type, buy, sell])
-        else:
-            if int(prev["buy"]) != buy or int(prev["sell"]) != sell:
-                # changed -> append
-                to_append.append([timestamp, today_str, gold_type, buy, sell])
-            # else unchanged -> skip
+    timestamp = parse_update_time(soup)
+    ts_str = timestamp.strftime("%Y-%m-%d %H:%M")
 
-    if to_append:
-        with open(CSV_FILE, "a", newline="", encoding="utf-8-sig") as f:
-            w = csv.writer(f)
-            for row in to_append:
-                w.writerow(row)
-        print(f"✅ Appended {len(to_append)} new rows at {timestamp} VN.")
+    records = []
+
+    for tr in rows:
+        tds = tr.find_all("td")
+        if len(tds) != 3:
+            continue
+
+        try:
+            gold_type = normalize_gold_name(tds[0].get_text())
+            buy = clean_price(tds[1].get_text())
+            sell = clean_price(tds[2].get_text())
+
+            records.append({
+                "date": ts_str,
+                "type": gold_type,
+                "buy": buy,
+                "sell": sell
+            })
+
+        except Exception as e:
+            print("⚠️ Skip row:", e)
+
+    if not records:
+        print("⚠️ No valid data parsed")
+        sys.exit(0)
+
+    df_new = pd.DataFrame(records)
+
+    # -------------------------
+    # Append safely to CSV
+    # -------------------------
+
+    if os.path.exists(CSV_FILE):
+        try:
+            df_old = pd.read_csv(CSV_FILE)
+            df = pd.concat([df_old, df_new], ignore_index=True)
+        except Exception:
+            print("⚠️ CSV corrupted, recreating file")
+            df = df_new
     else:
-        print(f"ℹ️ No changes detected at {timestamp} VN.")
+        df = df_new
+
+    # Remove exact duplicates
+    df = df.drop_duplicates(subset=["date", "type", "buy", "sell"])
+
+    df.to_csv(CSV_FILE, index=False, encoding="utf-8-sig")
+
+    print(f"✅ Saved {len(df_new)} rows at {ts_str}")
+
 
 if __name__ == "__main__":
     main()
