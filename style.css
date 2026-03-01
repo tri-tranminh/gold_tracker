@@ -1,0 +1,456 @@
+/* ============================================
+   Gold Price Tracker - Premium Design System
+   ============================================ */
+
+/* Reset & Base */
+*,
+*::before,
+*::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    /* Gold palette */
+    --gold-50: #fdf8e8;
+    --gold-100: #f9edc4;
+    --gold-200: #f3d98a;
+    --gold-300: #e9bf4b;
+    --gold-400: #d4a843;
+    --gold-500: #b8922e;
+    --gold-600: #9a7724;
+    --gold-700: #7a5d1c;
+    --gold-800: #5c4615;
+    --gold-900: #3e2f0e;
+
+    /* Neutrals */
+    --gray-50: #fafaf9;
+    --gray-100: #f5f5f4;
+    --gray-200: #e7e5e4;
+    --gray-300: #d6d3d1;
+    --gray-400: #a8a29e;
+    --gray-500: #78716c;
+    --gray-600: #57534e;
+    --gray-700: #44403c;
+    --gray-800: #292524;
+    --gray-900: #1c1917;
+
+    /* Semantic */
+    --green: #16a34a;
+    --green-bg: #dcfce7;
+    --red: #dc2626;
+    --red-bg: #fee2e2;
+    --bg: #f8f6f1;
+    --white: #ffffff;
+
+    /* Spacing */
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.04);
+    --shadow-lg: 0 10px 30px rgba(0,0,0,0.08), 0 4px 8px rgba(0,0,0,0.04);
+    --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--gray-800);
+    line-height: 1.6;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 24px 20px 40px;
+}
+
+/* ============================================
+   Header
+   ============================================ */
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid var(--gold-200);
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.header-icon {
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, var(--gold-100), var(--gold-200));
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.header h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    letter-spacing: -0.02em;
+}
+
+.header-right {
+    text-align: right;
+}
+
+.update-label {
+    font-size: 0.82rem;
+    color: var(--gray-500);
+    font-weight: 500;
+}
+
+/* ============================================
+   Filter Card
+   ============================================ */
+.filters-card {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    margin-bottom: 20px;
+    display: flex;
+    gap: 24px;
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition);
+}
+
+.filters-card:hover {
+    box-shadow: var(--shadow-md);
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 200px;
+}
+
+.filter-group label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--gray-500);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.filter-group select {
+    appearance: none;
+    -webkit-appearance: none;
+    background: var(--gray-50);
+    border: 1.5px solid var(--gray-200);
+    border-radius: var(--radius-sm);
+    padding: 10px 36px 10px 14px;
+    font-size: 0.92rem;
+    font-weight: 500;
+    color: var(--gray-800);
+    font-family: inherit;
+    cursor: pointer;
+    outline: none;
+    transition: var(--transition);
+    background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%2378716c' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+}
+
+.filter-group select:focus {
+    border-color: var(--gold-400);
+    box-shadow: 0 0 0 3px rgba(212, 168, 67, 0.15);
+}
+
+.filter-group select:hover {
+    border-color: var(--gold-300);
+}
+
+/* ============================================
+   Cards (Price Table & Chart)
+   ============================================ */
+.price-card,
+.chart-card {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition);
+}
+
+.price-card:hover,
+.chart-card:hover {
+    box-shadow: var(--shadow-md);
+}
+
+.card-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--gray-800);
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.card-title svg {
+    color: var(--gold-400);
+    flex-shrink: 0;
+}
+
+/* ============================================
+   Price Table
+   ============================================ */
+.table-wrapper {
+    overflow-x: auto;
+    border-radius: var(--radius-sm);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+thead {
+    background: linear-gradient(135deg, var(--gold-50), var(--gold-100));
+}
+
+th {
+    padding: 14px 20px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--gold-700);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    text-align: left;
+    border-bottom: 2px solid var(--gold-200);
+}
+
+.th-type {
+    width: 50%;
+}
+
+.th-buy,
+.th-sell {
+    text-align: right;
+    width: 25%;
+}
+
+td {
+    padding: 16px 20px;
+    font-size: 0.95rem;
+    border-bottom: 1px solid var(--gray-100);
+    transition: var(--transition);
+}
+
+tbody tr {
+    transition: var(--transition);
+}
+
+tbody tr:hover {
+    background: var(--gold-50);
+}
+
+tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.gold-name {
+    font-weight: 600;
+    color: var(--gray-800);
+}
+
+.price-cell {
+    text-align: right;
+    font-weight: 600;
+    font-size: 1rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--gray-800);
+}
+
+.price-change {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    margin-left: 10px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    vertical-align: middle;
+}
+
+.price-change.up {
+    color: var(--green);
+    background: var(--green-bg);
+}
+
+.price-change.down {
+    color: var(--red);
+    background: var(--red-bg);
+}
+
+.price-change.neutral {
+    color: var(--gray-500);
+    background: var(--gray-100);
+}
+
+.loading-cell {
+    text-align: center;
+    color: var(--gray-400);
+    font-style: italic;
+    padding: 32px 20px;
+}
+
+/* ============================================
+   Chart
+   ============================================ */
+.chart-container {
+    position: relative;
+    width: 100%;
+    height: 380px;
+}
+
+.chart-container canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+/* ============================================
+   Footer
+   ============================================ */
+.footer {
+    text-align: center;
+    padding-top: 20px;
+    color: var(--gray-500);
+    font-size: 0.82rem;
+}
+
+.footer a {
+    color: var(--gold-500);
+    text-decoration: none;
+    font-weight: 600;
+    transition: var(--transition);
+}
+
+.footer a:hover {
+    color: var(--gold-700);
+    text-decoration: underline;
+}
+
+.footer-sub {
+    margin-top: 4px;
+    color: var(--gray-400);
+    font-size: 0.78rem;
+}
+
+/* ============================================
+   Responsive
+   ============================================ */
+@media (max-width: 640px) {
+    .container {
+        padding: 16px 12px 32px;
+    }
+
+    .header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .header h1 {
+        font-size: 1.25rem;
+    }
+
+    .filters-card {
+        flex-direction: column;
+        gap: 14px;
+        padding: 16px;
+    }
+
+    .filter-group {
+        min-width: 100%;
+    }
+
+    .price-card,
+    .chart-card {
+        padding: 16px;
+    }
+
+    th, td {
+        padding: 12px 12px;
+    }
+
+    .price-change {
+        display: block;
+        margin-left: 0;
+        margin-top: 4px;
+        width: fit-content;
+    }
+
+    .chart-container {
+        height: 280px;
+    }
+}
+
+/* ============================================
+   Animations
+   ============================================ */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(16px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.header,
+.filters-card,
+.price-card,
+.chart-card {
+    animation: fadeInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) backwards;
+}
+
+.filters-card { animation-delay: 0.05s; }
+.price-card   { animation-delay: 0.1s; }
+.chart-card   { animation-delay: 0.15s; }
+
+/* ============================================
+   Skeleton Loading
+   ============================================ */
+@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+.skeleton {
+    background: linear-gradient(90deg,
+        var(--gray-100) 25%,
+        var(--gray-200) 50%,
+        var(--gray-100) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
+    border-radius: 6px;
+    display: inline-block;
+}
