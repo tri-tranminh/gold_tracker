@@ -19,7 +19,7 @@ const GOLD_TYPE_LABELS = {
 
 async function loadCSV() {
     try {
-        const res = await fetch(CSV_PATH);
+        const res = await fetch(`${CSV_PATH}?v=${Date.now()}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const text = await res.text();
         return parseCSV(text);
