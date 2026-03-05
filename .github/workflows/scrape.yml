@@ -2,8 +2,8 @@ name: Scrape Gold Prices
 
 on:
   schedule:
-    # Run daily at 03:00 UTC (10:00 AM Vietnam time)
-    - cron: "0 3 * * *"
+    # Run every 3 hours a day
+    - cron: "0 */3 * * *"
   workflow_dispatch: # Allow manual trigger
 
 permissions:
